@@ -163,7 +163,7 @@ def process_job_queue():
                 )
                 continue
 
-            output_dir = config.transcode_path
+            output_dir = job.output_dir or config.transcode_path
 
             # Start the job
             _start_transcode_job(job, media_item, preset_name, output_dir)
@@ -296,10 +296,10 @@ def transcode(
         job.update_status("processing")
         logger.debug(f"Job {job.id} status changed to processing")
 
-        # Always use the configured transcode_path from config
         config = load_config()
-        output_dir = config.transcode_path
-        logger.info(f"Using configured transcode_path: {output_dir}")
+        if not output_dir:
+            output_dir = config.transcode_path
+        logger.info(f"Using output directory: {output_dir}")
 
         # Get the preset from config
         if preset_name not in config.presets:
