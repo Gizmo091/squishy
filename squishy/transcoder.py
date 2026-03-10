@@ -396,6 +396,10 @@ def transcode(
         if hw_accel and hw_accel.lower() == "none":
             preset["force_software"] = True
 
+        # Strip audio_bitrate when audio_codec is "copy" (bitrate is not applicable)
+        if preset.get("audio_codec") == "copy":
+            preset.pop("audio_bitrate", None)
+
         # Run the effeffmpeg transcoding
         logger.info(f"Starting transcode for job {job.id} using effeffmpeg")
 
@@ -618,9 +622,10 @@ def transcode(
         # Update job status with thread safety
         job.update_status("failed")
 
-        # Update error message with thread safety
+        # Update error message and add to logs for UI visibility
         with job._lock:
             job.error_message = str(e)
+            job.ffmpeg_logs.append(f"ERROR: {str(e)}")
 
         # Make sure to capture final error messages in logs
         if hasattr(e, "stderr") and e.stderr:

@@ -188,10 +188,13 @@ def add_preset():
             "scale": scale,
             "container": container,
             "audio_codec": audio_codec,
-            "audio_bitrate": audio_bitrate,
             "force_software": force_software,
             "allow_fallback": allow_fallback,
         }
+
+        # Only include audio_bitrate when applicable
+        if audio_codec != "copy":
+            preset["audio_bitrate"] = audio_bitrate
 
         if subtitle_mode:
             preset["subtitle_mode"] = subtitle_mode
@@ -262,10 +265,13 @@ def edit_preset(name):
             "scale": scale,
             "container": container,
             "audio_codec": audio_codec,
-            "audio_bitrate": audio_bitrate,
             "force_software": force_software,
             "allow_fallback": allow_fallback,
         }
+
+        # Only include audio_bitrate when applicable
+        if audio_codec != "copy":
+            preset["audio_bitrate"] = audio_bitrate
 
         if subtitle_mode:
             preset["subtitle_mode"] = subtitle_mode
