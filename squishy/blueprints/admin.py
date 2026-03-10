@@ -179,6 +179,9 @@ def add_preset():
         force_software = request.form.get("force_software") == "on"
         allow_fallback = request.form.get("allow_fallback") == "on"
 
+        # Subtitle settings
+        subtitle_mode = "keep" if request.form.get("keep_subtitles") == "on" else None
+
         # Create the preset dictionary
         preset = {
             "codec": codec,
@@ -189,6 +192,9 @@ def add_preset():
             "force_software": force_software,
             "allow_fallback": allow_fallback,
         }
+
+        if subtitle_mode:
+            preset["subtitle_mode"] = subtitle_mode
 
         # Add either CRF or bitrate
         if use_crf and crf is not None:
@@ -247,6 +253,9 @@ def edit_preset(name):
         force_software = request.form.get("force_software") == "on"
         allow_fallback = request.form.get("allow_fallback") == "on"
 
+        # Subtitle settings
+        subtitle_mode = "keep" if request.form.get("keep_subtitles") == "on" else None
+
         # Update the preset
         preset = {
             "codec": codec,
@@ -257,6 +266,9 @@ def edit_preset(name):
             "force_software": force_software,
             "allow_fallback": allow_fallback,
         }
+
+        if subtitle_mode:
+            preset["subtitle_mode"] = subtitle_mode
 
         # Add either CRF or bitrate
         if use_crf and crf is not None:
