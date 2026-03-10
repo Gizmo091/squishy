@@ -406,9 +406,8 @@ def transcode(
                 output_file=output_path,
                 dry_run=True,
                 overwrite=True,
-                presets_data={
-                    "preset": preset
-                },  # Wrap the preset in a dict as expected by effeffmpeg
+                preset_name="preset",
+                presets_data={"preset": preset},
             )
 
             # Add the command to the logs right away
@@ -492,6 +491,12 @@ def transcode(
                     process.finished = True
                     process.returncode = process.process.returncode
 
+                    # Wait for reader threads to finish consuming output
+                    if hasattr(process, 'stdout_thread'):
+                        process.stdout_thread.join(timeout=5)
+                    if hasattr(process, 'stderr_thread'):
+                        process.stderr_thread.join(timeout=5)
+
                     # Collect any final output
                     stderr = process.get_stderr()
 
@@ -522,7 +527,13 @@ def transcode(
                 logger.error(
                     f"Transcode failed with code {process.returncode}: {stderr}"
                 )
-                raise RuntimeError(f"Transcode failed with code {process.returncode}")
+                # Add stderr to job logs before raising
+                if stderr:
+                    with job._lock:
+                        for line in stderr.splitlines():
+                            if line.strip():
+                                job.ffmpeg_logs.append(f"STDERR: {line}")
+                raise RuntimeError(f"Transcode failed with code {process.returncode}: {stderr}")
 
             # Update job status
             job.update_status("completed")
