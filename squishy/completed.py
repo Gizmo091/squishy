@@ -9,6 +9,8 @@ from datetime import datetime
 
 from squishy.transcoder import apply_output_path_mapping, build_streams_comparison
 
+logger = logging.getLogger(__name__)
+
 def get_completed_transcodes(transcode_path: str) -> List[Dict[str, Any]]:
     """Get all completed transcodes with metadata."""
     # Apply path mappings to transcode_path
@@ -37,7 +39,14 @@ def get_completed_transcodes(transcode_path: str) -> List[Dict[str, Any]]:
             # Retrocompat: build streams_comparison if missing
             if "streams_comparison" not in metadata:
                 original_path = metadata.get("original_path", "")
-                if original_path and os.path.exists(original_path) and os.path.exists(media_path):
+                logger.debug(f"Retrocompat streams_comparison: original_path={original_path}, media_path={media_path}")
+                if not original_path:
+                    logger.debug(f"Skipping streams_comparison: no original_path in sidecar {sidecar_path}")
+                elif not os.path.exists(original_path):
+                    logger.warning(f"Skipping streams_comparison: original_path does not exist: {original_path}")
+                elif not os.path.exists(media_path):
+                    logger.warning(f"Skipping streams_comparison: media_path does not exist: {media_path}")
+                else:
                     try:
                         streams_comp = build_streams_comparison(original_path, media_path)
                         if streams_comp:
@@ -48,8 +57,11 @@ def get_completed_transcodes(transcode_path: str) -> List[Dict[str, Any]]:
                             sidecar_data["streams_comparison"] = streams_comp
                             with open(sidecar_path, "w") as f:
                                 json.dump(sidecar_data, f, indent=2)
-                    except Exception as e:
-                        logging.warning(f"Could not build streams comparison for {media_path}: {e}")
+                            logger.info(f"Retrocompat: updated sidecar with streams_comparison for {media_path}")
+                        else:
+                            logger.warning(f"build_streams_comparison returned None for source={original_path}, output={media_path}")
+                    except Exception:
+                        logger.exception(f"Could not build streams comparison for {media_path}")
 
             # Parse completed_at date for sorting
             if "completed_at" in metadata:

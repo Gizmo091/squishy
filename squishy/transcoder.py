@@ -54,7 +54,10 @@ def build_streams_comparison(source_path, output_path):
     output_info = get_media_info(output_path)
 
     if "error" in source_info or "error" in output_info:
-        logger.warning("Could not build streams comparison: media info error")
+        if "error" in source_info:
+            logger.warning(f"Could not get media info for source '{source_path}': {source_info['error']}")
+        if "error" in output_info:
+            logger.warning(f"Could not get media info for output '{output_path}': {output_info['error']}")
         return None
 
     comparison = {}
