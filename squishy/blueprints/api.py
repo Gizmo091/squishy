@@ -478,7 +478,18 @@ def replace_original():
         return jsonify({"success": False, "message": f"Original directory does not exist: {original_dir}"}), 404
 
     try:
-        shutil.move(file_path, original_path)
+        # Remove the original file first to avoid permission issues
+        # when overwriting on network/NAS filesystems.
+        if os.path.exists(original_path):
+            os.remove(original_path)
+        try:
+            shutil.move(file_path, original_path)
+        except OSError:
+            # Cross-filesystem move may fail with EPERM when shutil.copy2
+            # tries to preserve extended attributes (common on Synology/NAS).
+            # Fall back to a simple copy without metadata preservation.
+            shutil.copy(file_path, original_path)
+            os.remove(file_path)
         # Remove the sidecar JSON
         if os.path.exists(sidecar_path):
             os.remove(sidecar_path)
