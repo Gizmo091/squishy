@@ -519,6 +519,17 @@ def transcode(
         if preset.get("audio_codec") == "copy":
             preset.pop("audio_bitrate", None)
 
+        # Get source resolution to prevent upscaling
+        source_height = None
+        try:
+            media_info = get_media_info(media_item.path)
+            if media_info.get("video"):
+                source_height = media_info["video"][0].get("height")
+                if source_height:
+                    logger.info(f"Source video height: {source_height}p")
+        except Exception as e:
+            logger.warning(f"Could not determine source resolution: {e}")
+
         # Run the effeffmpeg transcoding
         logger.info(f"Starting transcode for job {job.id} using effeffmpeg")
 
@@ -531,6 +542,7 @@ def transcode(
                 overwrite=True,
                 preset_name="preset",
                 presets_data={"preset": preset},
+                source_height=source_height,
             )
 
             # Add the command to the logs right away
@@ -553,6 +565,7 @@ def transcode(
                 preset_name="preset",  # Use the preset name
                 presets_data={"preset": preset},  # Pass the preset data directly
                 quiet=False,  # Ensure we get verbose output for better logs
+                source_height=source_height,
             )
 
             # Store the process ID for potential cancellation
