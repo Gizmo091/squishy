@@ -904,6 +904,12 @@ def generate_ffmpeg_command(
         else:
             command += ["-crf", "28"]
 
+    # Map all streams explicitly (FFmpeg default only picks one per type)
+    command += ["-map", "0:v"]   # All video streams
+    command += ["-map", "0:a"]   # All audio streams
+    if subtitle_mode == "keep":
+        command += ["-map", "0:s?"]  # All subtitle streams (? = ignore if none)
+
     if audio_codec == "copy":
         command += ["-c:a", "copy"]
     else:
@@ -919,7 +925,7 @@ def generate_ffmpeg_command(
         if audio_codec == "flac" and flac_compression is not None:
             command += ["-compression_level", str(flac_compression)]
 
-    # Handle subtitle streams
+    # Handle subtitle codec
     if subtitle_mode == "keep":
         command += ["-c:s", "copy"]
 
